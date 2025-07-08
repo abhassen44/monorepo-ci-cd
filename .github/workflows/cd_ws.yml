@@ -22,8 +22,19 @@ jobs:
           file: ./docker/Dockerfile.ws
           push: true
           tags: abhassen/todo-app-websocket:${{ github.sha }}
-      - name: Deploy to the VM
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
-          chmod 700 /home/runner/ssh_key
-          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.201.119.15 -t "docker stop user_ws && docker run --name user_ws -d -p 8081:8081 abhassen/todo-app-websocket:${{ github.sha }}"
+     - name: Deploy to the VM
+       run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+          chmod 600 ~/ssh_key
+
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.201.119.15 << 'EOF'
+            # Stop and remove existing container if it exists
+            docker stop user_ws || true
+            docker rm user_ws || true
+
+            # Pull the new image
+            docker pull abhassen/todo-app-websocket:${{ github.sha }}
+
+            # Run the container on port 8081
+            docker run --name user_ws -d -p 8081:8081 --restart=unless-stopped abhassen/todo-app-websocket:${{ github.sha }}
+          EOF

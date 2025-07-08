@@ -22,8 +22,14 @@ jobs:
           file: ./docker/Dockerfile.backend
           push: true
           tags: abhassen/todo-app-backend:${{ github.sha }}
-      - name: Deploy to the VM
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
-          chmod 700 /home/runner/ssh_key
-          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.201.119.15 -t "docker stop user_backend && docker run --name user_backend -d -p 8080:8080 abhassen/todo-app-backend:${{ github.sha }}"
+    - name: Deploy to the VM
+      run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+          chmod 600 ~/ssh_key
+
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.201.119.15 << 'EOF'
+            sudo docker stop user_backend || true
+            sudo docker rm user_backend || true
+            sudo docker pull abhassen/todo-app-backend:${{ github.sha }}
+            sudo docker run --name user_backend -d -p 8080:8080 --restart=unless-stopped abhassen/todo-app-backend:${{ github.sha }}
+          EOF
