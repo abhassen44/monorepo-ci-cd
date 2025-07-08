@@ -1,7 +1,9 @@
 name: Deploy the frontend
+
 on:
   push:
     branches: [ main ]
+
 jobs: 
   build:
     runs-on: ubuntu-latest
@@ -14,15 +16,27 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Build and push 
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./docker/Dockerfile.frontend
-          build-args:
-            - DATABASE_URL=${{ secrets.DATABASE_URL }}
+          build-args: |
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
           push: true
-          tags: abhassen/todo-app-websocket:${{ github.sha }}
-      ## Step to deploy this to a VM
-      
+          tags: abhassen/todo-app-frontend:${{ github.sha }}
+
+      # - name: Deploy to the VM
+      #   run: |
+      #     echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+      #     chmod 600 ~/ssh_key
+
+      #     ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.201.119.15 << 'EOF'
+      #       docker stop user_frontend || true
+      #       docker rm user_frontend || true
+
+      #       docker pull abhassen/todo-app-frontend:${{ github.sha }}
+
+      #       docker run --name user_frontend -d -p 80:3000 --restart=unless-stopped abhassen/todo-app-frontend:${{ github.sha }}
+      #     EOF

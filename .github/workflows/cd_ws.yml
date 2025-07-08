@@ -1,4 +1,4 @@
-name: Deploy the websocket server
+name: Deploy the ws server
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile.ws
           push: true
-          tags: abhassen/todo-app-websocket:${{ github.sha }}
+          tags: abhassen/todo-app-ws:${{ github.sha }}
 
       - name: Deploy to the VM
         run: |
@@ -36,8 +36,8 @@ jobs:
             docker rm user_ws || true
 
             # Pull the new image
-            docker pull abhassen/todo-app-websocket:${{ github.sha }}
+            docker pull abhassen/todo-app-ws:${{ github.sha }}
 
             # Run the container on port 8081
-            docker run --name user_ws -d -p 8081:8081 --restart=unless-stopped abhassen/todo-app-websocket:${{ github.sha }}
+            docker run --name user_ws -d -p 8081:8081 --restart=unless-stopped abhassen/todo-app-ws:${{ github.sha }}
           EOF
